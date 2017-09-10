@@ -657,7 +657,7 @@
                     dataType: "json"
                 };
             },
-            get: function get(query, cb) {
+            get: function get(query, dummy, cb) {
                 var that = this, settings;
                 if (!cb) {
                     return;
@@ -2114,6 +2114,7 @@
             this.input = o.input;
             this.menu = o.menu;
             this.enabled = true;
+            this.autoselect = !!o.autoselect;
             this.active = false;
             this.input.hasFocus() && this.activate();
             this.dir = this.input.getLangDir();
@@ -2162,6 +2163,10 @@
             },
             _onDatasetRendered: function onDatasetRendered(type, suggestions, async, dataset) {
                 this._updateHint();
+                if (this.autoselect) {
+                    var cursorClass = this.selectors.cursor.substr(1);
+                    this.menu.$node.find(this.selectors.suggestion).first().addClass(cursorClass);
+                }
                 this.eventBus.trigger("render", suggestions, async, dataset);
             },
             _onAsyncRequested: function onAsyncRequested(type, dataset, query) {
@@ -2185,6 +2190,11 @@
                 var $selectable;
                 if ($selectable = this.menu.getActiveSelectable()) {
                     if (this.select($selectable)) {
+                        $e.preventDefault();
+                        $e.stopPropagation();
+                    }
+                } else if (this.autoselect) {
+                    if (this.select(this.menu.getTopSelectable())) {
                         $e.preventDefault();
                         $e.stopPropagation();
                     }
@@ -2429,7 +2439,8 @@
                         input: input,
                         menu: menu,
                         eventBus: eventBus,
-                        minLength: o.minLength
+                        minLength: o.minLength,
+                        autoselect: o.autoselect
                     }, www);
                     $input.data(keys.www, www);
                     $input.data(keys.typeahead, typeahead);
@@ -2553,7 +2564,10 @@
             });
         }
         function buildHintFromInput($input, www) {
-            return $input.clone().addClass(www.classes.hint).removeData().css(www.css.hint).css(getBackgroundStyles($input)).prop("readonly", true).removeAttr("id name placeholder required").attr({
+            return $input.clone().addClass(www.classes.hint).removeData().css(www.css.hint).css(getBackgroundStyles($input)).prop({
+                readonly: true,
+                required: false
+            }).removeAttr("id name placeholder").removeClass("required").attr({
                 spellcheck: "false",
                 tabindex: -1
             });
