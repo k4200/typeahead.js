@@ -36,7 +36,7 @@ var Remote = (function() {
 
     // ### public
 
-    get: function get(query, cb) {
+    get: function get(query, dummy, cb) {
       var that = this, settings;
 
       if (!cb) { return; }
